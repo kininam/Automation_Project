@@ -2,6 +2,7 @@
 timestamp=$(date '+%d%m%Y-%H%M%S')
 myname=namritha
 s3_bucket=upgrad-$myname
+File=/var/www/html/inventory.html
 #1. Updating system
 echo "======================= Updating System ====================="
 sudo apt update -y
@@ -54,3 +55,25 @@ fi
 echo "================== Uploading tar file to s3 bucket====================="
 aws s3 cp /tmp/${myname}-httpd-logs-${timestamp}.tar s3://${s3_bucket}/${myname}-httpd-logs-${timestamp}.tar
 echo " ====================== End of task 2 ================"
+#7. checking for inventoryfile
+if test -f $File
+then
+        echo "===================================Inventory File exists==============================================="
+else
+        echo "=============================Inventory file does not exist,creating file==================================="
+        echo -e " Logtype \t Time Created \t Type \t Size" > $File
+echo " ================================Inventory file created================================="
+
+fi
+#8. Book Keeping
+size=$(du -sh "/tmp/${myname}-httpd-logs-${timestamp}.tar" | awk '{print $1}')
+ echo -e "httpd-logs \t $timestamp \t tar \t $size" >> $File
+ echo "================= Inventory file updated for bookkeeping=============="
+#9. setting up cronjob
+if test -f /etc/cron.d/automation
+then
+        echo "=================cronjob already created============================"
+else
+        echo "* 10 * * * root ./root/Automation_Project/automation.sh" > /etc/cron.d/automation
+        echo "==================== Cron Job creatd ========================="
+fi
